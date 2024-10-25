@@ -1,0 +1,1 @@
+/Users/kciter/project/writing/ringabell/ringabell/target/wasm32-unknown-unknown/release/libringabell.rlib: /Users/kciter/project/writing/ringabell/ringabell/src/lib.rs /Users/kciter/project/writing/ringabell/ringabell/src/utils.rs
