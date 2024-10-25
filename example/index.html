@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wasm Music Registration and Search</title>
+  </head>
+  <body>
+    <h1>Music Registration and Search with Wasm</h1>
+    <button id="registerButton">Register Song</button>
+    <button id="recordButton">Listen and Search</button>
+    
+    <input type="file" id="fileInput" style="display:none" accept=".wav" />
+    
+    <div id="output"></div>
+    <div id="fileList">
+        <h3>Registered Songs:</h3>
+        <ul id="registeredFiles"></ul>
+    </div>
+    
+    <script type="module" src="index.js"></script>
+  </body>
+</html>
