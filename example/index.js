@@ -51,6 +51,42 @@ async function main() {
     });
   }
 
+  // 파일을 사용하여 `search` 함수 호출
+  searchButton.addEventListener("click", () => {
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "audio/wav";
+    fileInput.click();
+
+    fileInput.addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      if (file && file.type === "audio/wav") {
+        output.textContent = "Searching song...";
+
+        // 파일을 읽고 Wasm의 `search` 함수 호출
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const songData = new Uint8Array(e.target.result);
+
+          // Wasm의 `search` 함수를 호출하여 파일 검색
+          const result = JSON.parse(search(songData));
+
+          console.log(result);
+
+          // 스코어 기반 검색 결과 처리
+          if (result.score === 0) {
+            output.textContent = "Not found";
+          } else {
+            output.textContent = `Search result: ${result.songName}`;
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        output.textContent = "Please select a valid WAV file.";
+      }
+    });
+  });
+
   // 마이크로 녹음하여 WAV 데이터로 변환 후 탐색
   recordButton.addEventListener("click", async () => {
     output.textContent = "Listening...";
