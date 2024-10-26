@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wasm Music Registration and Search</title>
   </head>
+
   <body>
     <h1>Music Registration and Search with Wasm</h1>
     <button id="registerButton">Register Song</button>
@@ -15,10 +16,37 @@
     
     <div id="output"></div>
     <div id="fileList">
-        <h3>Registered Songs:</h3>
-        <ul id="registeredFiles"></ul>
+      <h3>Searchable Songs:</h3>
+      <ul id="registeredFiles"></ul>
+    </div>
+
+    <div>
+      <h4>Burlesque - National Sweetheart</h4>
+      <audio controls>
+          <source src="/public/Burlesque - National Sweetheart.wav" type="audio/wav">
+      </audio>
+
+      <h4>Corny Candy - The Soundlings</h4>
+      <audio controls>
+        <source src="/public/Corny Candy - The Soundlings.wav" type="audio/wav">
+      </audio>
+
+      <h4>Head of The Snake - Everet Almond</h4>
+      <audio controls>
+        <source src="/public/Head of The Snake - Everet Almond.wav" type="audio/wav">
+      </audio>
+
+      <h4>July - John Patitucci</h4>
+      <audio controls>
+        <source src="/public/July - John Patitucci.wav" type="audio/wav">
+      </audio>
+
+      <h4>Walking The Dog - Jeremy Korpas</h4>
+      <audio controls>
+        <source src="/public/Walking The Dog - Jeremy Korpas.wav" type="audio/wav">
+      </audio>
     </div>
     
-    <script type="module" src="index.js"></script>
+    <script type="module" src="index.js" defer></script>
   </body>
 </html>

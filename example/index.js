@@ -1,7 +1,26 @@
 import init, { register, search } from "./ringabell.js";
+import { FFmpeg } from "./ffmpeg/ffmpeg/index.js";
+import { toBlobURL } from "./ffmpeg/util/index.js";
+
+async function ffmpegLoad() {
+  const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
+  const ffmpeg = new FFmpeg();
+
+  await ffmpeg.load({
+    coreURL: await toBlobURL("/ffmpeg/core/ffmpeg-core.js", "text/javascript"),
+    wasmURL: await toBlobURL(
+      "/ffmpeg/core/ffmpeg-core.wasm",
+      "application/wasm"
+    ),
+  });
+
+  return ffmpeg;
+}
 
 async function main() {
   await init(); // Wasm 모듈 초기화
+
+  const ffmpeg = await ffmpegLoad();
 
   const fileInput = document.getElementById("fileInput");
   const registerButton = document.getElementById("registerButton");
@@ -14,23 +33,42 @@ async function main() {
     fileInput.click(); // 파일 선택 대화상자 열기
   });
 
-  // 파일 선택 후 이벤트 처리
+  async function initialRegisteredFiles() {
+    const registeredFiles = document.getElementById("registeredFiles");
+    registeredFiles.innerHTML = ""; // 기존 목록 초기화
+
+    const songNames = [
+      "Burlesque - National Sweetheart.wav",
+      "Corny Candy - The Soundlings.wav",
+      "Head of The Snake - Everet Almond.wav",
+      "July - John Patitucci.wav",
+      "Walking The Dog - Jeremy Korpas.wav",
+    ];
+
+    for (const songName of songNames) {
+      await fetch(`/public/${songName}`)
+        .then((response) => response.arrayBuffer())
+        .then((songData) => {
+          register(songName, new Uint8Array(songData));
+          registeredSongNames.push(songName);
+          updateRegisteredFileList();
+        });
+    }
+  }
+
+  await initialRegisteredFiles();
+
   fileInput.addEventListener("change", async (event) => {
     const file = event.target.files[0];
     if (file && file.type === "audio/wav") {
-      // WAV 파일인지 확인
       output.textContent = "Registering song...";
 
-      // 파일을 읽고 Wasm에 등록
       const reader = new FileReader();
       reader.onload = (e) => {
         const songData = new Uint8Array(e.target.result);
         const songName = file.name;
-
-        // Wasm의 register 함수를 호출하여 파일 등록
         register(songName, songData);
 
-        // 등록된 파일 목록에 추가
         registeredSongNames.push(songName);
         updateRegisteredFileList();
 
@@ -43,7 +81,8 @@ async function main() {
   });
 
   function updateRegisteredFileList() {
-    registeredFiles.innerHTML = ""; // 기존 목록 초기화
+    const registeredFiles = document.getElementById("registeredFiles");
+    registeredFiles.innerHTML = "";
     registeredSongNames.forEach((name) => {
       const li = document.createElement("li");
       li.textContent = name;
@@ -51,7 +90,6 @@ async function main() {
     });
   }
 
-  // 파일을 사용하여 `search` 함수 호출
   searchButton.addEventListener("click", () => {
     const fileInput = document.createElement("input");
     fileInput.type = "file";
@@ -63,17 +101,13 @@ async function main() {
       if (file && file.type === "audio/wav") {
         output.textContent = "Searching song...";
 
-        // 파일을 읽고 Wasm의 `search` 함수 호출
         const reader = new FileReader();
         reader.onload = (e) => {
           const songData = new Uint8Array(e.target.result);
-
-          // Wasm의 `search` 함수를 호출하여 파일 검색
           const result = JSON.parse(search(songData));
 
           console.log(result);
 
-          // 스코어 기반 검색 결과 처리
           if (result.score === 0) {
             output.textContent = "Not found";
           } else {
@@ -87,13 +121,18 @@ async function main() {
     });
   });
 
-  // 마이크로 녹음하여 WAV 데이터로 변환 후 탐색
   recordButton.addEventListener("click", async () => {
     output.textContent = "Listening...";
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const audioContext = new AudioContext();
+
+      if (!window.MediaRecorder) {
+        output.textContent = "MediaRecorder not supported in this browser.";
+        return;
+      }
+
       const mediaRecorder = new MediaRecorder(stream);
       const audioChunks = [];
 
@@ -102,20 +141,36 @@ async function main() {
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks);
-        const arrayBuffer = await audioBlob.arrayBuffer();
+        const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+        const audioBytes = new Uint8Array(await audioBlob.arrayBuffer());
 
-        // PCM 데이터를 WAV 파일로 변환
-        const wavData = convertToWav(
-          new Float32Array(await audioContext.decodeAudioData(arrayBuffer))
-        );
+        // const wavData = await convertWebmToWav(arrayBuffer, audioContext);
 
-        // `search` 함수를 호출하여 WAV 데이터를 전달
-        const result = JSON.parse(search(wavData));
+        await ffmpeg.writeFile("input.webm", audioBytes);
+        await ffmpeg.exec([
+          "-i",
+          "input.webm",
+          "-acodec",
+          "pcm_s16le",
+          "-ac",
+          "1",
+          "-ar",
+          "44100",
+          "output.wav",
+        ]);
+        const data = await ffmpeg.readFile("output.wav");
+
+        const result = JSON.parse(search(data));
+        // // download wavData
+        // const blob = new Blob([wavData], { type: "audio/wav" });
+        // const url = URL.createObjectURL(blob);
+        // const a = document.createElement("a");
+        // a.href = url;
+        // a.download = "recorded.wav";
+        // a.click();
 
         console.log(result);
 
-        // 스코어 기반 검색 결과 처리
         if (result.score === 0) {
           output.textContent = "Not found";
         } else {
@@ -123,7 +178,6 @@ async function main() {
         }
       };
 
-      // 5초간 녹음 후 자동 중지
       mediaRecorder.start();
       setTimeout(() => {
         mediaRecorder.stop();
@@ -133,52 +187,6 @@ async function main() {
       output.textContent = "Error accessing microphone: " + error.message;
     }
   });
-
-  // PCM 데이터를 WAV 파일 포맷으로 변환
-  function convertToWav(pcmData) {
-    const sampleRate = 44100;
-    const numChannels = 1;
-    const bitsPerSample = 16;
-    const byteRate = (sampleRate * numChannels * bitsPerSample) / 8;
-    const blockAlign = (numChannels * bitsPerSample) / 8;
-    const wavBuffer = new ArrayBuffer(44 + pcmData.length * 2); // 44 bytes header + PCM data
-    const view = new DataView(wavBuffer);
-
-    // WAV 파일 헤더 작성
-    writeString(view, 0, "RIFF");
-    view.setUint32(4, 36 + pcmData.length * 2, true);
-    writeString(view, 8, "WAVE");
-    writeString(view, 12, "fmt ");
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true); // PCM 형식
-    view.setUint16(22, numChannels, true);
-    view.setUint32(24, sampleRate, true);
-    view.setUint32(28, byteRate, true);
-    view.setUint16(32, blockAlign, true);
-    view.setUint16(34, bitsPerSample, true);
-    writeString(view, 36, "data");
-    view.setUint32(40, pcmData.length * 2, true);
-
-    // PCM 데이터를 WAV 포맷에 맞게 작성
-    let offset = 44;
-    for (let i = 0; i < pcmData.length; i++) {
-      const sample = Math.max(-1, Math.min(1, pcmData[i]));
-      view.setInt16(
-        offset,
-        sample < 0 ? sample * 0x8000 : sample * 0x7fff,
-        true
-      );
-      offset += 2;
-    }
-
-    return new Uint8Array(wavBuffer);
-  }
-
-  function writeString(view, offset, string) {
-    for (let i = 0; i < string.length; i++) {
-      view.setUint8(offset + i, string.charCodeAt(i));
-    }
-  }
 }
 
 main();
