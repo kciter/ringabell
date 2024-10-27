@@ -35,7 +35,7 @@ pub fn search_fingerprints(registered: Vec<(String, Vec<u64>)>, fingerprints: Ve
     let mut score_map: HashMap<usize, usize> = HashMap::new();
 
     // 저장된 각 노래와 비교하여 일치도 계산
-    for (i, (_, existing_fingerprints)) in unsafe { registered.iter().enumerate() } {
+    for (i, (_, existing_fingerprints)) in registered.iter().enumerate() {
         for fingerprint in &fingerprints {
             if existing_fingerprints.contains(fingerprint) {
                 *score_map.entry(i).or_insert(0) += 1;
@@ -49,11 +49,10 @@ pub fn search_fingerprints(registered: Vec<(String, Vec<u64>)>, fingerprints: Ve
     // 일정 임계값 이상일 때만 결과 반환, 그렇지 않으면 "Not found" 반환
     const MIN_SCORE_THRESHOLD: usize = 5;
     if best_score >= MIN_SCORE_THRESHOLD {
-        let result = json!({
-            "songName": unsafe { registered[best_index].0.clone() },
+        json!({
+            "songName": registered[best_index].0.clone(),
             "score": best_score
-        });
-        result.to_string()
+        }).to_string()
     } else {
         json!({
             "songName": "Not found",

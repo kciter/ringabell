@@ -2,7 +2,7 @@ import init, { register, search } from "./ringabell.js";
 import { FFmpeg } from "./ffmpeg/ffmpeg/index.js";
 import { toBlobURL } from "./ffmpeg/util/index.js";
 
-async function ffmpegLoad() {
+async function loadFFmpeg() {
   const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
   const ffmpeg = new FFmpeg();
 
@@ -20,9 +20,8 @@ async function ffmpegLoad() {
 async function main() {
   await init(); // Wasm 모듈 초기화
 
-  const ffmpeg = await ffmpegLoad();
+  const ffmpeg = await loadFFmpeg();
 
-  const fileInput = document.getElementById("fileInput");
   const registerButton = document.getElementById("registerButton");
   const searchButton = document.getElementById("searchButton");
   const recordButton = document.getElementById("recordButton");
@@ -30,7 +29,32 @@ async function main() {
   let registeredSongNames = [];
 
   registerButton.addEventListener("click", () => {
-    fileInput.click(); // 파일 선택 대화상자 열기
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "audio/wav";
+    input.click();
+
+    input.addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      if (file && file.type === "audio/wav") {
+        output.textContent = "Registering song...";
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const songData = new Uint8Array(e.target.result);
+          const songName = file.name;
+          register(songName, songData);
+
+          registeredSongNames.push(songName);
+          updateRegisteredFileList();
+
+          output.textContent = `Registered song: ${songName}`;
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        output.textContent = "Please select a valid WAV file.";
+      }
+    });
   });
 
   async function initialRegisteredFiles() {
@@ -46,39 +70,16 @@ async function main() {
     ];
 
     for (const songName of songNames) {
-      await fetch(`/public/${songName}`)
-        .then((response) => response.arrayBuffer())
-        .then((songData) => {
-          register(songName, new Uint8Array(songData));
-          registeredSongNames.push(songName);
-          updateRegisteredFileList();
-        });
+      const response = await fetch(`/public/${songName}`);
+      const arrayBuffer = await response.arrayBuffer();
+      const songData = new Uint8Array(arrayBuffer);
+      await register(songName, songData);
+      registeredSongNames.push(songName);
+      updateRegisteredFileList();
     }
   }
 
   await initialRegisteredFiles();
-
-  fileInput.addEventListener("change", async (event) => {
-    const file = event.target.files[0];
-    if (file && file.type === "audio/wav") {
-      output.textContent = "Registering song...";
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const songData = new Uint8Array(e.target.result);
-        const songName = file.name;
-        register(songName, songData);
-
-        registeredSongNames.push(songName);
-        updateRegisteredFileList();
-
-        output.textContent = `Registered song: ${songName}`;
-      };
-      reader.readAsArrayBuffer(file);
-    } else {
-      output.textContent = "Please select a valid WAV file.";
-    }
-  });
 
   function updateRegisteredFileList() {
     const registeredFiles = document.getElementById("registeredFiles");
@@ -102,9 +103,9 @@ async function main() {
         output.textContent = "Searching song...";
 
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
           const songData = new Uint8Array(e.target.result);
-          const result = JSON.parse(search(songData));
+          const result = JSON.parse(await search(songData));
 
           console.log(result);
 
@@ -114,6 +115,7 @@ async function main() {
             output.textContent = `Search result: ${result.songName}`;
           }
         };
+
         reader.readAsArrayBuffer(file);
       } else {
         output.textContent = "Please select a valid WAV file.";
@@ -160,7 +162,7 @@ async function main() {
         ]);
         const data = await ffmpeg.readFile("output.wav");
 
-        const result = JSON.parse(search(data));
+        const result = JSON.parse(await search(data));
         // // download wavData
         // const blob = new Blob([wavData], { type: "audio/wav" });
         // const url = URL.createObjectURL(blob);

@@ -11,7 +11,7 @@ use wav::{bytes_to_samples, get_wav_duration_from_bytes};
 static mut MUSIC_FINGERPRINTS: Vec<(String, Vec<u64>)> = Vec::new();
 
 #[wasm_bindgen]
-pub fn register(name: String, data: Vec<u8>) {
+pub async fn register(name: String, data: Vec<u8>) {
     // 1. get duration and samples from the wav data
     let duration = get_wav_duration_from_bytes(&data);
     let samples = bytes_to_samples(data);
@@ -32,7 +32,7 @@ pub fn register(name: String, data: Vec<u8>) {
 }
 
 #[wasm_bindgen]
-pub fn search(data: Vec<u8>) -> String {
+pub async fn search(data: Vec<u8>) -> String {
     // 1. get duratino and samples from the wav data
     let duration = get_wav_duration_from_bytes(&data);
     let samples = bytes_to_samples(data);
