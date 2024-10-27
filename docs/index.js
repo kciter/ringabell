@@ -57,30 +57,6 @@ async function main() {
     });
   });
 
-  async function initialRegisteredFiles() {
-    const registeredFiles = document.getElementById("registeredFiles");
-    registeredFiles.innerHTML = ""; // 기존 목록 초기화
-
-    const songNames = [
-      "Burlesque - National Sweetheart.wav",
-      "Corny Candy - The Soundlings.wav",
-      "Head of The Snake - Everet Almond.wav",
-      "July - John Patitucci.wav",
-      "Walking The Dog - Jeremy Korpas.wav",
-    ];
-
-    for (const songName of songNames) {
-      const response = await fetch(`./public/${songName}`);
-      const arrayBuffer = await response.arrayBuffer();
-      const songData = new Uint8Array(arrayBuffer);
-      await register(songName, songData);
-      registeredSongNames.push(songName);
-      updateRegisteredFileList();
-    }
-  }
-
-  await initialRegisteredFiles();
-
   function updateRegisteredFileList() {
     const registeredFiles = document.getElementById("registeredFiles");
     registeredFiles.innerHTML = "";
