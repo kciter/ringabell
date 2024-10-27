@@ -7,9 +7,9 @@ async function loadFFmpeg() {
   const ffmpeg = new FFmpeg();
 
   await ffmpeg.load({
-    coreURL: await toBlobURL("/ffmpeg/core/ffmpeg-core.js", "text/javascript"),
+    coreURL: await toBlobURL("./ffmpeg/core/ffmpeg-core.js", "text/javascript"),
     wasmURL: await toBlobURL(
-      "/ffmpeg/core/ffmpeg-core.wasm",
+      "./ffmpeg/core/ffmpeg-core.wasm",
       "application/wasm"
     ),
   });
