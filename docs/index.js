@@ -70,7 +70,7 @@ async function main() {
     ];
 
     for (const songName of songNames) {
-      const response = await fetch(`/public/${songName}`);
+      const response = await fetch(`./public/${songName}`);
       const arrayBuffer = await response.arrayBuffer();
       const songData = new Uint8Array(arrayBuffer);
       await register(songName, songData);
