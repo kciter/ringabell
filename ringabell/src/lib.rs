@@ -20,7 +20,7 @@ pub async fn register(name: String, data: Vec<u8>) {
     let spectrogram = create_spectrogram(samples);
     
     // 3. extract peaks from the spectrogram
-    let peaks = extract_peaks(spectrogram, duration as f32);
+    let peaks = extract_peaks(spectrogram);
 
     // 4. create a fingerprints from the peaks
     let fingerprints = create_fingerprints(peaks);
@@ -41,7 +41,7 @@ pub async fn search(data: Vec<u8>) -> String {
     let spectrogram = create_spectrogram(samples);
 
     // 3. extract peaks from the spectrogram
-    let peaks = extract_peaks(spectrogram, duration as f32);
+    let peaks = extract_peaks(spectrogram);
 
     // 4. create a fingerprints from the peaks
     let fingerprints = create_fingerprints(peaks);

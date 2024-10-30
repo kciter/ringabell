@@ -63,7 +63,7 @@ pub fn create_spectrogram(samples: Vec<f32>) -> Vec<Vec<f32>> {
 }
 
 /// 스펙트로그램을 분석하여 주파수 대역에서 주요 피크를 추출하는 함수
-pub fn extract_peaks(spectrogram: Vec<Vec<f32>>, audio_duration: f32) -> Vec<(usize, usize)> {
+pub fn extract_peaks(spectrogram: Vec<Vec<f32>>) -> Vec<(usize, usize)> {
     if spectrogram.is_empty() {
         return Vec::new();
     }
@@ -77,7 +77,7 @@ pub fn extract_peaks(spectrogram: Vec<Vec<f32>>, audio_duration: f32) -> Vec<(us
         (160, 512),
     ];
 
-    let bin_duration = audio_duration / spectrogram.len() as f32;
+    // let bin_duration = spectrogram.len() as f32;
     let mut peaks = Vec::new();
 
     for (bin_idx, bin) in spectrogram.iter().enumerate() {
@@ -112,8 +112,7 @@ pub fn extract_peaks(spectrogram: Vec<Vec<f32>>, audio_duration: f32) -> Vec<(us
         // 평균보다 큰 피크만 추출하여 추가
         for (i, &value) in max_mags.iter().enumerate() {
             if value > avg_magnitude {
-                let peak_time_in_bin = freq_indices[i] * bin_duration / bin.len() as f32;
-                let peak_time_index = (bin_idx as f32 * bin_duration + peak_time_in_bin) as usize;
+                let peak_time_index = bin_idx;
 
                 // (시간 인덱스, 주파수 인덱스) 튜플을 추가
                 peaks.push((peak_time_index, freq_indices[i] as usize));
