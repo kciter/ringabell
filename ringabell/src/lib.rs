@@ -1,19 +1,18 @@
-mod utils;
 mod wav;
+mod fft;
 mod spectrogram;
 mod fingerprint;
 
 use wasm_bindgen::prelude::*;
 use fingerprint::{create_fingerprints, search_fingerprints};
 use spectrogram::{create_spectrogram, extract_peaks};
-use wav::{bytes_to_samples, get_wav_duration_from_bytes};
+use wav::bytes_to_samples;
 
 static mut MUSIC_FINGERPRINTS: Vec<(String, Vec<u64>)> = Vec::new();
 
 #[wasm_bindgen]
 pub async fn register(name: String, data: Vec<u8>) {
-    // 1. get duration and samples from the wav data
-    let duration = get_wav_duration_from_bytes(&data);
+    // 1. get samples from the wav data
     let samples = bytes_to_samples(data);
 
     // 2. create a spectrogram from the samples
@@ -33,8 +32,7 @@ pub async fn register(name: String, data: Vec<u8>) {
 
 #[wasm_bindgen]
 pub async fn search(data: Vec<u8>) -> String {
-    // 1. get duratino and samples from the wav data
-    let duration = get_wav_duration_from_bytes(&data);
+    // 1. get samples from the wav data
     let samples = bytes_to_samples(data);
 
     // 2. create a spectrogram from the samples
