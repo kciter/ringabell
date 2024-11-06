@@ -1,12 +1,12 @@
-mod utils;
 mod wav;
+mod fft;
 mod spectrogram;
 mod fingerprint;
 
 use wasm_bindgen::prelude::*;
 use fingerprint::{create_fingerprints, search_fingerprints};
 use spectrogram::{create_spectrogram, extract_peaks};
-use wav::{bytes_to_samples};
+use wav::bytes_to_samples;
 
 static mut MUSIC_FINGERPRINTS: Vec<(String, Vec<u64>)> = Vec::new();
 

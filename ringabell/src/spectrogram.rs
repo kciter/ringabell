@@ -1,5 +1,6 @@
-use rustfft::{FftPlanner, num_complex::Complex};
+// use rustfft::{FftPlanner, num_complex::Complex};
 use std::f32::consts::PI;
+use super::fft::{fft, Complex};
 
 /// 해밍 윈도우를 적용해 각 프레임을 생성
 fn hamming_window(size: usize) -> Vec<f32> {
@@ -36,8 +37,8 @@ pub fn create_spectrogram(samples: Vec<f32>) -> Vec<Vec<f32>> {
     let window = hamming_window(freq_bin_size);
 
     // FFT 설정
-    let mut planner = FftPlanner::new();
-    let fft = planner.plan_fft_forward(freq_bin_size);
+    // let mut planner = FftPlanner::new();
+    // let fft = planner.plan_fft_forward(freq_bin_size);
 
     for i in 0..num_windows {
         let start = i * hop_size;
@@ -52,7 +53,7 @@ pub fn create_spectrogram(samples: Vec<f32>) -> Vec<Vec<f32>> {
         }
 
         // FFT 수행
-        fft.process(&mut bin);
+        fft(&mut bin);
 
         // 스펙트럼 강도 계산 후 저장
         let spectrum_magnitudes: Vec<f32> = bin.iter().map(|c| c.norm()).collect();
@@ -122,3 +123,4 @@ pub fn extract_peaks(spectrogram: Vec<Vec<f32>>) -> Vec<(usize, usize)> {
 
     peaks
 }
+
